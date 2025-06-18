@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: line-webhook
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python webhook_receiver.py"
