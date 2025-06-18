@@ -6,7 +6,7 @@ app = Flask(__name__)
 @app.route("/webhook", methods=['POST'])
 def webhook():
     body = request.get_json()
-    print("📦 受信データ：", json.dumps(body, indent=2, ensure_ascii=False))  # ← ここを追加！
+    print("📦 受信データ：", json.dumps(body, indent=2, ensure_ascii=False), flush=True)
 
     events = body.get("events", [])
     for event in events:
