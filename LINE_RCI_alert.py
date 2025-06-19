@@ -23,6 +23,7 @@ def send_line_message(user_id, message):
     }
     resp = requests.post(url, headers=headers, json=data)
     print("LINE送信ステータス:", resp.status_code)
+    print("レスポンス内容:", resp.text)  # ←ここ追加！
 
 # RCI計算関数
 def calculate_rci(series, period):
