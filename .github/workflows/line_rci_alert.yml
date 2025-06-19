@@ -1,0 +1,28 @@
+name: RCI Alert Bot
+
+on:
+  schedule:
+    - cron: "*/1 * * * *"  # 毎分実行
+  workflow_dispatch:       # 手動実行もOK
+
+jobs:
+  rci_alert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v3
+
+      - name: Pythonをセットアップ
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: 依存ライブラリをインストール
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 通知スクリプトを実行
+        env:
+          LINE_NOTIFY_TOKEN: ${{ secrets.LINE_NOTIFY_TOKEN }}
+        run: python LINE_RCI_alert.py
