@@ -4,16 +4,25 @@ import numpy as np
 import requests
 import time
 
-# LINE通知の設定
-LINE_NOTIFY_TOKEN = "jypU1wjnvlCWmxCu2MJr+xygYyWQsU/4BKol+Lj4ynnEbOuuC6J2/Jsp61ZqxBsTSqFl46B5WP+Ie/5R3q/p0/vPie3svaTDmF2nHJXydM+PlbhtC3sAhzsuugCP9J18MbI4HPKixhAD3sGyrjsTkAdB04t89/1O/w1cDnyilFU="
-LINE_NOTIFY_URL = "https://notify-api.line.me/api/notify"
+# LINE Messaging API設定
+LINE_CHANNEL_ACCESS_TOKEN = "jypU1wjnvlCWmxCu2MJr+xygYyWQsU/4BKol+Lj4ynnEbOuuC6J2/Jsp61ZqxBsTSqFl46B5WP+Ie/5R3q/p0/vPie3svaTDmF2nHJXydM+PlbhtC3sAhzsuugCP9J18MbI4HPKixhAD3sGyrjsTkAdB04t89/1O/w1cDnyilFU="
+LINE_USER_ID = "U2c62666daafa4b6573215a7c4309c943"
 
-def send_line_message(message):
+def send_line_message(user_id, message):
+    url = "https://api.line.me/v2/bot/message/push"
     headers = {
-        "Authorization": f"Bearer {LINE_NOTIFY_TOKEN}"
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}"
     }
-    data = {"message": message}
-    requests.post(LINE_NOTIFY_URL, headers=headers, data=data)
+    data = {
+        "to": user_id,
+        "messages": [{
+            "type": "text",
+            "text": message
+        }]
+    }
+    resp = requests.post(url, headers=headers, json=data)
+    print("LINE送信ステータス:", resp.status_code)
 
 # RCI計算関数
 def calculate_rci(series, period):
@@ -31,9 +40,9 @@ def check_mochipoyo_condition(df):
     rci26 = calculate_rci(df['Close'], 26)
     rci52 = calculate_rci(df['Close'], 52)
 
-    if rci9 > 80 and rci26 <= 0 and rci26 >= -80 and rci52 < 0:
+    if rci9 > 80 and -80 <= rci26 <= 0 and rci52 < 0:
         return "SELL"
-    elif rci9 < -80 and rci26 >= 0 and rci26 <= 80 and rci52 > 0:
+    elif rci9 < -80 and 0 <= rci26 <= 80 and rci52 > 0:
         return "BUY"
     return None
 
@@ -46,8 +55,6 @@ tickers = {
 
 # メイン処理
 def main():
-    send_line_message("📢 テスト通知です！RCI条件なしでも送信！")
-
     while True:
         for pair, ticker in tickers.items():
             df = yf.download(ticker, interval="1m", period="1d")
@@ -57,7 +64,7 @@ def main():
             if signal:
                 msg = f"{pair}でシグナル検出！条件: {signal}\n価格: {df['Close'].iloc[-1]}"
                 print(msg)
-                send_line_message(msg)
+                send_line_message(LINE_USER_ID, msg)
         time.sleep(60)
 
 if __name__ == "__main__":
