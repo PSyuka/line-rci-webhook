@@ -46,6 +46,8 @@ tickers = {
 
 # メイン処理
 def main():
+    send_line_message("📢 テスト通知です！RCI条件なしでも送信！")
+
     while True:
         for pair, ticker in tickers.items():
             df = yf.download(ticker, interval="1m", period="1d")
