@@ -1,0 +1,11 @@
+name: hello_test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: echo hello
+        run: echo "✅ Hello GitHub Actions!"
