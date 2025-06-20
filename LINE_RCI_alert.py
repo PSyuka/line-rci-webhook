@@ -1,12 +1,13 @@
+import os
 import yfinance as yf
 import pandas as pd
 import numpy as np
 import requests
 import time
 
-# LINE Messaging API設定
-LINE_CHANNEL_ACCESS_TOKEN = "jypU1wjnvlCWmxCu2MJr+xygYyWQsU/4BKol+Lj4ynnEbOuuC6J2/Jsp61ZqxBsTSqFl46B5WP+Ie/5R3q/p0/vPie3svaTDmF2nHJXydM+PlbhtC3sAhzsuugCP9J18MbI4HPKixhAD3sGyrjsTkAdB04t89/1O/w1cDnyilFU="
-LINE_USER_ID = "U2c62666daafa4b6573215a7c4309c943"
+# Secretsから取得
+LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
+LINE_USER_ID = os.getenv("LINE_USER_ID")
 
 def send_line_message(user_id, message):
     url = "https://api.line.me/v2/bot/message/push"
@@ -23,9 +24,7 @@ def send_line_message(user_id, message):
     }
     resp = requests.post(url, headers=headers, json=data)
     print("LINE送信ステータス:", resp.status_code)
-    print("レスポンス内容:", resp.text)  # ←ここ追加！
 
-# RCI計算関数
 def calculate_rci(series, period):
     if len(series) < period:
         return np.nan
@@ -35,7 +34,6 @@ def calculate_rci(series, period):
     rci = 1 - (6 * np.sum(d ** 2)) / (period * (period ** 2 - 1))
     return rci * 100
 
-# 売買判定関数（もちぽよ式）
 def check_mochipoyo_condition(df):
     rci9 = calculate_rci(df['Close'], 9)
     rci26 = calculate_rci(df['Close'], 26)
@@ -47,26 +45,22 @@ def check_mochipoyo_condition(df):
         return "BUY"
     return None
 
-# 通貨とティッカー対応
 tickers = {
     "USDJPY": "JPY=X",
     "EURJPY": "EURJPY=X",
     "GBPJPY": "GBPJPY=X"
 }
 
-# メイン処理
 def main():
-    while True:
-        for pair, ticker in tickers.items():
-            df = yf.download(ticker, interval="1m", period="1d")
-            if df.empty:
-                continue
-            signal = check_mochipoyo_condition(df)
-            if signal:
-                msg = f"{pair}でシグナル検出！条件: {signal}\n価格: {df['Close'].iloc[-1]}"
-                print(msg)
-                send_line_message(LINE_USER_ID, msg)
-        time.sleep(60)
+    for pair, ticker in tickers.items():
+        df = yf.download(ticker, interval="1m", period="1d")
+        if df.empty:
+            continue
+        signal = check_mochipoyo_condition(df)
+        if signal:
+            msg = f"{pair}でシグナル検出！条件: {signal}\n価格: {df['Close'].iloc[-1]}"
+            print(msg)
+            send_line_message(LINE_USER_ID, msg)
 
 if __name__ == "__main__":
     main()
