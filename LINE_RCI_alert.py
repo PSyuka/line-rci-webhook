@@ -3,11 +3,13 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 import requests
-import time
 
-# Secretsから取得
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 LINE_USER_ID = os.getenv("LINE_USER_ID")
+
+print("🔍 スクリプト開始")
+print("LINE_CHANNEL_ACCESS_TOKEN:", "取得済み" if LINE_CHANNEL_ACCESS_TOKEN else "なし")
+print("LINE_USER_ID:", LINE_USER_ID)
 
 def send_line_message(user_id, message):
     url = "https://api.line.me/v2/bot/message/push"
@@ -55,12 +57,15 @@ def main():
     for pair, ticker in tickers.items():
         df = yf.download(ticker, interval="1m", period="1d")
         if df.empty:
+            print(f"{pair}: データ取得失敗")
             continue
         signal = check_mochipoyo_condition(df)
         if signal:
             msg = f"{pair}でシグナル検出！条件: {signal}\n価格: {df['Close'].iloc[-1]}"
             print(msg)
             send_line_message(LINE_USER_ID, msg)
+        else:
+            print(f"{pair}: シグナルなし")
 
 if __name__ == "__main__":
     main()
