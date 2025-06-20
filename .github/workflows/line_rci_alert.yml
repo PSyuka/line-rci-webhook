@@ -3,7 +3,7 @@ name: RCI Alert Bot
 on:
   schedule:
     - cron: "*/1 * * * *"  # 毎分実行
-  workflow_dispatch:       # 手動実行もOK
+  workflow_dispatch:
 
 jobs:
   rci_alert:
@@ -24,5 +24,6 @@ jobs:
 
       - name: 通知スクリプトを実行
         env:
-          LINE_NOTIFY_TOKEN: ${{ secrets.LINE_NOTIFY_TOKEN }}
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
         run: python LINE_RCI_alert.py
