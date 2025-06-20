@@ -1,7 +1,6 @@
 print("✅ スクリプトは起動されました")
-print("LINE_CHANNEL_ACCESS_TOKEN:", "あり" if LINE_CHANNEL_ACCESS_TOKEN else "なし")
-print("LINE_USER_ID:", LINE_USER_ID)
-
+print("line_channel_access_token:", "あり" if LINE_CHANNEL_ACCESS_TOKEN else "なし")
+print("line_user_id:", LINE_USER_ID)
 
 import os
 import yfinance as yf
@@ -9,8 +8,8 @@ import pandas as pd
 import numpy as np
 import requests
 
-LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
-LINE_USER_ID = os.getenv("LINE_USER_ID")
+LINE_CHANNEL_ACCESS_TOKEN = os.getenv("line_channel_access_token")
+LINE_USER_ID = os.getenv("line_user_id")
 
 print("🔍 スクリプト開始")
 print("LINE_CHANNEL_ACCESS_TOKEN:", "取得済み" if LINE_CHANNEL_ACCESS_TOKEN else "なし")
