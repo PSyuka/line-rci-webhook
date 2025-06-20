@@ -1,3 +1,8 @@
+print("✅ スクリプトは起動されました")
+print("LINE_CHANNEL_ACCESS_TOKEN:", "あり" if LINE_CHANNEL_ACCESS_TOKEN else "なし")
+print("LINE_USER_ID:", LINE_USER_ID)
+
+
 import os
 import yfinance as yf
 import pandas as pd
