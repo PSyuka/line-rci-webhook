@@ -1,7 +1,3 @@
-print("✅ スクリプトは起動されました")
-print("line_channel_access_token:", "あり" if LINE_CHANNEL_ACCESS_TOKEN else "なし")
-print("line_user_id:", LINE_USER_ID)
-
 import os
 import yfinance as yf
 import pandas as pd
