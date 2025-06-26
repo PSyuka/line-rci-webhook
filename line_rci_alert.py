@@ -11,9 +11,9 @@ import requests
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("line_channel_access_token")
 LINE_USER_ID = os.getenv("line_user_id")
 
-print("🔍 スクリプト開始")
-print("LINE_CHANNEL_ACCESS_TOKEN:", "取得済み" if LINE_CHANNEL_ACCESS_TOKEN else "なし")
-print("LINE_USER_ID:", LINE_USER_ID)
+print("✅ スクリプトは起動されました")
+print("line_channel_access_token:", "あり" if LINE_CHANNEL_ACCESS_TOKEN else "なし")
+print("line_user_id:", LINE_USER_ID)
 
 def send_line_message(user_id, message):
     url = "https://api.line.me/v2/bot/message/push"
