@@ -4,21 +4,22 @@ import pandas as pd
 import numpy as np
 import requests
 
-LINE_CHANNEL_ACCESS_TOKEN = os.getenv("line_channel_access_token")
-LINE_USER_ID = os.getenv("line_user_id")
+# 🔑 環境変数の取得は必ずprintより前に
+line_token = os.getenv("line_channel_access_token")
+user_id = os.getenv("line_user_id")
 
 print("✅ スクリプトは起動されました")
-print("line_channel_access_token:", "あり" if LINE_CHANNEL_ACCESS_TOKEN else "なし")
-print("line_user_id:", LINE_USER_ID)
+print("line_channel_access_token:", "あり" if line_token else "なし")
+print("line_user_id:", user_id)
 
-def send_line_message(user_id, message):
+def send_line_message(to, message):
     url = "https://api.line.me/v2/bot/message/push"
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}"
+        "Authorization": f"Bearer {line_token}"
     }
     data = {
-        "to": user_id,
+        "to": to,
         "messages": [{
             "type": "text",
             "text": message
@@ -40,7 +41,6 @@ def check_mochipoyo_condition(df):
     rci9 = calculate_rci(df['Close'], 9)
     rci26 = calculate_rci(df['Close'], 26)
     rci52 = calculate_rci(df['Close'], 52)
-
     if rci9 > 80 and -80 <= rci26 <= 0 and rci52 < 0:
         return "SELL"
     elif rci9 < -80 and 0 <= rci26 <= 80 and rci52 > 0:
@@ -63,7 +63,7 @@ def main():
         if signal:
             msg = f"{pair}でシグナル検出！条件: {signal}\n価格: {df['Close'].iloc[-1]}"
             print(msg)
-            send_line_message(LINE_USER_ID, msg)
+            send_line_message(user_id, msg)
         else:
             print(f"{pair}: シグナルなし")
 
