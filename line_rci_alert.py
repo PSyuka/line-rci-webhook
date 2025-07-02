@@ -53,9 +53,9 @@ def load_cfg(path="config.json") -> dict:
 # ─── 1 回だけ判定 ────────────────────────────────────────────────────
 def one_shot(cfg: dict) -> None:
     for name, ticker in cfg["pairs"].items():
-        df = yf.download(ticker, interval="1m", period="1d", progress=False)
-        if df.empty:
-            print(f"{name}: データ取得失敗"); continue
+        df = yf.download(ticker, interval="1m", period="2d", progress=False)
+        if len(df) < 52:
+            print(f"{name}: データ本数が足りません ({len(df)})");  continue
 
         # 直近値と RCI を数値で取得
         close_col = df["Close"]
