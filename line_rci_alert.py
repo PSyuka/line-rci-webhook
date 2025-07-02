@@ -54,27 +54,22 @@ def load_cfg(path="config.json") -> dict:
 def one_shot(cfg: dict) -> None:
     for name, ticker in cfg["pairs"].items():
         df = yf.download(ticker, interval="1m", period="2d", progress=False)
+
+        # ─ 本数不足ならスキップ ─
         if len(df) < 52:
-            print(f"{name}: データ本数が足りません ({len(df)})");  continue
+            print(f"{name}: {len(df)} 本しかないのでスキップ");  continue
 
-        # 直近値と RCI を数値で取得
-        close_col = df["Close"]
-        if isinstance(close_col, pd.DataFrame):          # Multi-Index 対応
-            close_col = close_col.iloc[:, 0]             # 1列目を Series に
-        price = float(close_col.iat[-1])                 # これで OK
-        r9, r26, r52 = (rci(df["Close"], 9),
-                        rci(df["Close"], 26),
-                        rci(df["Close"], 52))
-
-        print(f"{name:<6} price={price:>7.3f}  "
-              f"R9={r9:>6.1f}  R26={r26:>6.1f}  R52={r52:>6.1f}",
-              flush=True)
+        # デバッグ表示用
+        price = float(df["Close"].iat[-1])
+        r9  = rci(df["Close"], 9)
+        r26 = rci(df["Close"], 26)
+        r52 = rci(df["Close"], 52)
+        print(f"{name} price={price:.3f}  R9={r9:6.1f}  R26={r26:6.1f}  R52={r52:6.1f}")
 
         sig = mochipoyo(df, cfg["mochipoyo"])
         if sig:
-            msg = (f"📈 {name} モチポヨシグナル\n"
-                   f"種別: **{sig}**\n価格: {price}")
-            send_line(msg)
+            send_line(f"📈 {name} でモチポヨシグナル！\n種別: {sig}\n価格: {price}")
+
 
 # ─── 常駐ループ（Render 用）───────────────────────────────────────────
 def loop_forever(path="config.json") -> None:
