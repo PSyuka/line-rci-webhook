@@ -30,6 +30,7 @@ jobs:
       # 本体スクリプトを実行
       - name: run line_rci_alert.py
         env:
-          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
-          LINE_USER_ID:             ${{ secrets.LINE_USER_ID }}
+          line_channel_access_token: ${{ secrets.line_channel_access_token }}
+          line_user_id:             ${{ secrets.line_user_id }}
+
         run: python line_rci_alert.py
