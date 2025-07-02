@@ -91,8 +91,12 @@ def one_shot(cfg: dict) -> None:
         r26 = rci(df["Close"], 26)
         r52 = rci(df["Close"], 52)
         price = df["Close"].iloc[-1]
-        print(f"{name} price={price:.3f}  R9={r9:6.1f}  R26={r26:6.1f}  R52={r52:6.1f}",
-              flush=True)
+        price = float(price)
+      
+      
+        print(f"{name} price={price:.3f}  "
+      f"R9={r9:6.1f}  R26={r26:6.1f}  R52={r52:6.1f}",
+      flush=True)
         # --------------------------------------------------------------
       
         sig = mochipoyo(df, cfg["mochipoyo"])
