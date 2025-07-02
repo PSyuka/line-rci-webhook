@@ -1,0 +1,13 @@
+{
+  "pairs": {
+    "USDJPY": "JPY=X",
+    "EURJPY": "EURJPY=X",
+    "GBPJPY": "GBPJPY=X",
+    "EURUSD": "EURUSD=X"
+  },
+  "mochipoyo": {
+    "rci9": 80,
+    "rci26_min": -80,
+    "rci26_max": 0
+  }
+}
