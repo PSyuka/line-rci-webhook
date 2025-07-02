@@ -1,22 +1,12 @@
+# render.yaml
 services:
-  - type: web              # Webhook 受信用 Flask
+  - type: web
     name: line-webhook
     env: python
+    plan: starter        # ← 有料はこれ 1 個だけ
     startCommand: python webhook_receiver.py
-    plan: starter          # ← starter に変更
     envVars:
-      - key: LINE_CHANNEL_ACCESS_TOKEN
-        value: ${LINE_CHANNEL_ACCESS_TOKEN}
+      - key: LINE_CHANNEL_ACCESS_TOKEN   # secrets に登録済みの名前
+        sync: false                     # Render のダッシュボード側に入力
       - key: LINE_USER_ID
-        value: ${LINE_USER_ID}
-
-  - type: worker           # ← 監視ループを常駐 Worker に分離
-    name: rci-alert-loop
-    env: python
-    startCommand: python line_rci_alert.py
-    plan: starter
-    envVars:
-      - key: LINE_CHANNEL_ACCESS_TOKEN
-        value: ${LINE_CHANNEL_ACCESS_TOKEN}
-      - key: LINE_USER_ID
-        value: ${LINE_USER_ID}
+        sync: false
