@@ -27,12 +27,19 @@ def send_line(text: str) -> None:
 
 # ─── RCI & モチポヨ判定 ───────────────────────────────────────────────
 def rci(s: pd.Series, n: int) -> float:
+    """n 本分の RCI を −100〜100 で返す"""
     if len(s) < n:
         return np.nan
-    date_rank  = np.arange(1, n + 1)
-    price_rank = s.tail(n).rank(method="first").to_numpy()
+
+    # ── 修正ポイント ─────────────────────────────
+    closes = s.tail(n).reset_index(drop=True)            # ← index を振り直す
+    price_rank = closes.rank(method="first").to_numpy()  # 1〜n の順位になる
+    # ────────────────────────────────────────────
+
+    date_rank = np.arange(1, n + 1)                      # 1,2,…,n
     d = date_rank - price_rank
-    return (1 - 6 * np.sum(d**2) / (n * (n**2 - 1))) * 100
+    return (1 - 6 * (d**2).sum() / (n * (n**2 - 1))) * 100
+
 
 def mochipoyo(df: pd.DataFrame, cfg: dict) -> Optional[str]:
     r9, r26, r52 = (rci(df["Close"], 9),
