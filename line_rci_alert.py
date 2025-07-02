@@ -84,26 +84,28 @@ def one_shot(cfg: dict) -> None:
     for name, ticker in cfg["pairs"].items():
         df = yf.download(ticker, interval="1m", period="1d", progress=False)
         if df.empty:
-            print(f"{name}: データ取得失敗");  continue
-          
-        # --- ここで RCI を計算して数値を出す -------------------------
+            print(f"{name}: データ取得失敗"); continue
+        if len(df) < 52:                             # ← 追加
+            print(f"{name}: データ不足 ({len(df)}本)"); continue
+
+        price = float(df["Close"].iloc[-1])          # ← 修正
         r9  = rci(df["Close"], 9)
         r26 = rci(df["Close"], 26)
         r52 = rci(df["Close"], 52)
-        price = float(df["Close"].iloc[-1])      # ← iloc[-1] ＋ float()
-      
-        print(f"{name} price={price:.3f}  "
-              f"R9={r9:6.1f}  R26={r26:6.1f}  R52={r52:6.1f}",
-              flush=True)
-        # --------------------------------------------------------------
-      
+
+        print(f"{name} price={price:.3f}  R9={r9:6.1f}  "
+              f"R26={r26:6.1f}  R52={r52:6.1f}", flush=True)
+
+        # NaN が混じっていればスキップ
+        if any(map(np.isnan, (r9, r26, r52))):
+            continue
+
         sig = mochipoyo(df, cfg["mochipoyo"])
         if sig:
-            msg = (f"📈 {name} でモチポヨシグナル！\n"
-                   f"種別: **{sig}**\n価格: {price}")
-            send_line(msg)
+            send_line(f"📈 {name} でモチポヨシグナル！\n種別: **{sig}**\n価格: {price}")
         else:
             print(f"{name}: シグナルなし")
+
 
 
 # ────────────────────────────────
