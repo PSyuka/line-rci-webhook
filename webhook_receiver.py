@@ -6,14 +6,15 @@ webhook_receiver.py
   初回リクエスト時にモチポヨ監視ループをバックグラウンド起動
 """
 
+from __future__ import annotations
 from flask import Flask, request
 import json, os, requests
 from threading import Thread
 
-from line_rci_alert import loop_forever   # ← 監視ループをインポート
+from line_rci_alert import loop_forever   # ← 監視ループ
 
 # ────────────────────────────────
-# LINE 設定
+# LINE 設定（Secrets から取得）
 # ────────────────────────────────
 LINE_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 
@@ -30,6 +31,7 @@ def push(to: str, text: str) -> None:
 # Flask アプリ
 # ────────────────────────────────
 app = Flask(__name__)
+_started = False          # ← 1 度だけループを起動するためのフラグ
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -43,11 +45,13 @@ def webhook():
     return "OK", 200
 
 
-@app.before_first_request
-def _start_loop():
-    """最初のリクエストを受けたら監視ループを起動"""
-    Thread(target=loop_forever, daemon=True).start()
-    print("🔁 モチポヨ監視ループを開始", flush=True)
+@app.before_request                    # Flask 3.1 でも有効
+def _start_loop_once():
+    global _started
+    if not _started:
+        Thread(target=loop_forever, daemon=True).start()
+        print("🔁 モチポヨ監視ループを開始", flush=True)
+        _started = True
 
 
 if __name__ == "__main__":
