@@ -58,7 +58,10 @@ def one_shot(cfg: dict) -> None:
             print(f"{name}: データ取得失敗"); continue
 
         # 直近値と RCI を数値で取得
-        price = float(df["Close"].iat[-1])
+        close_col = df["Close"]
+        if isinstance(close_col, pd.DataFrame):          # Multi-Index 対応
+            close_col = close_col.iloc[:, 0]             # 1列目を Series に
+        price = float(close_col.iat[-1])                 # これで OK
         r9, r26, r52 = (rci(df["Close"], 9),
                         rci(df["Close"], 26),
                         rci(df["Close"], 52))
