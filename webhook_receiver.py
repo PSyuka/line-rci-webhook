@@ -1,41 +1,55 @@
-from flask import Flask, request
-import json
-import requests
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+webhook_receiver.py
+  LINE Messaging API Webhook 受信 & エコー返信
+  初回リクエスト時にモチポヨ監視ループをバックグラウンド起動
+"""
 
+from flask import Flask, request
+import json, os, requests
+from threading import Thread
+
+from line_rci_alert import loop_forever   # ← 監視ループをインポート
+
+# ────────────────────────────────
+# LINE 設定
+# ────────────────────────────────
+LINE_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
+
+def push(to: str, text: str) -> None:
+    url  = "https://api.line.me/v2/bot/message/push"
+    hdrs = {"Authorization": f"Bearer {LINE_TOKEN}",
+            "Content-Type":  "application/json"}
+    body = {"to": to, "messages": [{"type": "text", "text": text}]}
+    r = requests.post(url, headers=hdrs, json=body, timeout=10)
+    print("📤 LINE status:", r.status_code, flush=True)
+
+
+# ────────────────────────────────
+# Flask アプリ
+# ────────────────────────────────
 app = Flask(__name__)
 
-LINE_ACCESS_TOKEN = 'jypU1wjnvlCWmxCu2MJr+xygYyWQsU/4BKol+Lj4ynnEbOuuC6J2/Jsp61ZqxBsTSqFl46B5WP+Ie/5R3q/p0/vPie3svaTDmF2nHJXydM+PlbhtC3sAhzsuugCP9J18MbI4HPKixhAD3sGyrjsTkAdB04t89/1O/w1cDnyilFU='
-
-def send_line_message(to, message):
-    url = 'https://api.line.me/v2/bot/message/push'
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': f'Bearer {LINE_ACCESS_TOKEN}'
-    }
-    data = {
-        'to': to,
-        'messages': [{
-            'type': 'text',
-            'text': message
-        }]
-    }
-    response = requests.post(url, headers=headers, json=data)
-    print(f'送信ステータス: {response.status_code}', flush=True)
-
-@app.route("/webhook", methods=['POST'])
+@app.route("/webhook", methods=["POST"])
 def webhook():
     body = request.get_json()
-    print("📦 受信データ：", json.dumps(body, indent=2, ensure_ascii=False), flush=True)
+    print("📩 webhook:", json.dumps(body, ensure_ascii=False), flush=True)
 
-    events = body.get("events", [])
-    for event in events:
-        if event["type"] == "message":
-            user_id = event["source"]["userId"]
-            print(f"📌 userId取得: {user_id}", flush=True)
-            send_line_message(user_id, "📢 RCI通知テスト：WebhookからLINE通知成功！")
+    for ev in body.get("events", []):
+        if ev["type"] == "message":
+            uid = ev["source"]["userId"]
+            push(uid, "📢 RCI通知テスト：Webhookから LINE 通知成功！")
     return "OK", 200
 
+
+@app.before_first_request
+def _start_loop():
+    """最初のリクエストを受けたら監視ループを起動"""
+    Thread(target=loop_forever, daemon=True).start()
+    print("🔁 モチポヨ監視ループを開始", flush=True)
+
+
 if __name__ == "__main__":
-    import os
-    port = int(os.environ.get("PORT", 10000))
+    port = int(os.getenv("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
