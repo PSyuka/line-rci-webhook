@@ -85,13 +85,21 @@ def one_shot(cfg: dict) -> None:
         df = yf.download(ticker, interval="1m", period="1d", progress=False)
         if df.empty:
             print(f"{name}: データ取得失敗");  continue
-
+          
+        # --- ここで RCI を計算して数値を出す -------------------------
+        r9  = rci(df["Close"], 9)
+        r26 = rci(df["Close"], 26)
+        r52 = rci(df["Close"], 52)
+        price = df["Close"].iloc[-1]
+        print(f"{name} price={price:.3f}  R9={r9:6.1f}  R26={r26:6.1f}  R52={r52:6.1f}",
+              flush=True)
+        # --------------------------------------------------------------
+      
         sig = mochipoyo(df, cfg["mochipoyo"])
         if sig:
-            price = df["Close"].iloc[-1]
-            text  = f"📈 {name} モチポヨシグナル!!\n種別: {sig}\n価格: {price}"
-            print(text, flush=True)
-            send_line(text)
+            msg = (f"📈 {name} でモチポヨシグナル！\n"
+                   f"種別: **{sig}**\n価格: {price}")
+            send_line(msg)
         else:
             print(f"{name}: シグナルなし")
 
