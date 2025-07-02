@@ -1,71 +1,96 @@
-import os
-import yfinance as yf
-import pandas as pd
-import numpy as np
-import requests
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+line_rci_alert.py
+  ・yfinance で 1分足を取得（Tickless になると None が返るので guard 付き）
+  ・もちぽよ式の BUY / SELL シグナル検出
+  ・LINE Messaging API へプッシュ
+"""
 
-# 🔑 環境変数の取得は必ずprintより前に
-line_token = os.getenv("line_channel_access_token")
-user_id = os.getenv("line_user_id")
+from __future__ import annotations
+import os, json, time, requests, numpy as np, pandas as pd, yfinance as yf
+from typing import Dict, Optional
 
-print("✅ スクリプトは起動されました")
-print("line_channel_access_token:", "あり" if line_token else "なし")
-print("line_user_id:", user_id)
+# ── 1) Secrets（小文字！）──────────────────────────────
+TOKEN   = os.getenv("line_channel_access_token")   # Bearer token
+USER_ID = os.getenv("line_user_id")                # プッシュ先 userId
 
-def send_line_message(to, message):
-    url = "https://api.line.me/v2/bot/message/push"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {line_token}"
-    }
-    data = {
-        "to": to,
-        "messages": [{
-            "type": "text",
-            "text": message
-        }]
-    }
-    resp = requests.post(url, headers=headers, json=data)
-    print("LINE送信ステータス:", resp.status_code)
+if not TOKEN or not USER_ID:                     # 起動直後のロギング
+    raise RuntimeError("環境変数 line_channel_access_token / line_user_id が設定されていません")
 
-def calculate_rci(series, period):
-    if len(series) < period:
+print("✅ スクリプト起動 OK")
+
+# ── 2) 設定ファイル ──────────────────────────────────
+CFG_PATH = os.getenv("config_file", "config.json")
+
+with open(CFG_PATH, encoding="utf-8") as f:
+    CFG: Dict = json.load(f)
+
+PAIRS: Dict[str, str] = CFG["pairs"]             # 表示名 → yfinance ティッカー
+THR   : Dict       = CFG["mochipoyo"]            # 閾値セット
+
+# ── 3) 送信関数（LINE→Discord 差し替えはここだけ）─────────
+def push(msg: str) -> None:
+    res = requests.post(
+        "https://api.line.me/v2/bot/message/push",
+        headers={
+            "Authorization": f"Bearer {TOKEN}",
+            "Content-Type": "application/json"
+        },
+        json={"to": USER_ID, "messages": [{"type": "text", "text": msg}]},
+        timeout=10
+    )
+    print("LINE status", res.status_code)
+
+# ── 4) RCI 関連ロジック ──────────────────────────────
+def rci(series: pd.Series, n: int) -> float:
+    if len(series) < n:
         return np.nan
-    date_rank = np.arange(1, period + 1)
-    price_rank = series.tail(period).rank(method='first').values
-    d = date_rank - price_rank
-    rci = 1 - (6 * np.sum(d ** 2)) / (period * (period ** 2 - 1))
-    return rci * 100
+    rank_date  = np.arange(1, n + 1)
+    rank_price = series.tail(n).rank(method="first").values
+    d = rank_date - rank_price
+    return (1 - 6 * np.sum(d ** 2) / (n * (n ** 2 - 1))) * 100
 
-def check_mochipoyo_condition(df):
-    rci9 = calculate_rci(df['Close'], 9)
-    rci26 = calculate_rci(df['Close'], 26)
-    rci52 = calculate_rci(df['Close'], 52)
-    if rci9 > 80 and -80 <= rci26 <= 0 and rci52 < 0:
+def mochipoyo(df: pd.DataFrame) -> Optional[str]:
+    r9, r26, r52 = (rci(df["Close"], n) for n in (9, 26, 52))
+
+    if (
+        r9  >  THR["rci9"]
+        and THR["rci26_min"] <= r26 <= THR["rci26_max"]
+        and r52 < 0
+    ):
         return "SELL"
-    elif rci9 < -80 and 0 <= rci26 <= 80 and rci52 > 0:
+    elif (
+        r9  < -THR["rci9"]
+        and -THR["rci26_max"] <= r26 <= -THR["rci26_min"]
+        and r52 > 0
+    ):
         return "BUY"
     return None
 
-tickers = {
-    "USDJPY": "JPY=X",
-    "EURJPY": "EURJPY=X",
-    "GBPJPY": "GBPJPY=X"
-}
-
-def main():
-    for pair, ticker in tickers.items():
-        df = yf.download(ticker, interval="1m", period="1d")
+# ── 5) メインループ（GitHub Actions では 1 回で終了）────────
+def main() -> None:
+    for name, ticker in PAIRS.items():
+        df = yf.download(ticker, interval="1m", period="1d", progress=False)
         if df.empty:
-            print(f"{pair}: データ取得失敗")
+            print(name, "データ取得失敗")
             continue
-        signal = check_mochipoyo_condition(df)
-        if signal:
-            msg = f"{pair}でシグナル検出！条件: {signal}\n価格: {df['Close'].iloc[-1]}"
-            print(msg)
-            send_line_message(user_id, msg)
+
+        sig = mochipoyo(df)
+        if sig:
+            price = df["Close"].iloc[-1]
+            msg = f"{name}: {sig} 価格={price:.4f}"
+            push(msg)
+            print("▶", msg)
         else:
-            print(f"{pair}: シグナルなし")
+            print(name, "シグナルなし")
 
 if __name__ == "__main__":
-    main()
+    # GitHub Actions なら 1 回実行して終了
+    # Render で「毎分」動かす場合は while ループ＋sleep(60) にする
+    LOOP = os.getenv("continuous", "false").lower() == "true"
+    while True:
+        main()
+        if not LOOP:
+            break
+        time.sleep(60)
