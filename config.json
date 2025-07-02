@@ -6,8 +6,9 @@
     "EURUSD": "EURUSD=X"
   },
   "mochipoyo": {
-    "rci9": 20,
-    "rci26_min": -40,
-    "rci26_max": 40
-  }
+  "rci9": 0,
+  "rci26_min": -250,
+  "rci26_max": 250
+}
+
 }
