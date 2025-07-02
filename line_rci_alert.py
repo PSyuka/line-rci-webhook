@@ -75,7 +75,7 @@ def one_shot(cfg: dict) -> None:
         print(f"{name} price={price:.3f}  R9={r9:6.1f}  R26={r26:6.1f}  R52={r52:6.1f}")
 
         sig = mochipoyo(df, cfg["mochipoyo"])
-        print(f"{name}: 判定={sig}")  
+        print(f"{name}: 判定結果 = {sig}", flush=True)
         if sig:
             send_line(f"📈 {name} でモチポヨシグナル！\n種別: {sig}\n価格: {price}")
 
