@@ -79,6 +79,16 @@ def one_shot(cfg: dict) -> None:
             print(f"{name}: データ取得失敗")
             continue
 
+        # ★ ここに追加 －－－－－－－－－－－－－－－－－－－－－－
+        r9  = rci(df["Close"],  9)
+        r26 = rci(df["Close"], 26)
+        r52 = rci(df["Close"], 52)
+        last = df["Close"].iloc[-1]
+        print(f"[{name}] price={last:.3f}  RCI9={r9:.1f} 26={r26:.1f} 52={r52:.1f}",
+              flush=True)
+        # －－－－－－－－－－－－－－－－－－－－－－－－－－－－－
+      
+      
         sig = mochipoyo(df, cfg["mochipoyo"])
         if sig:
             price = df["Close"].iloc[-1]
