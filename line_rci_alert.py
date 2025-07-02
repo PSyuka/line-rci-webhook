@@ -67,7 +67,8 @@ def one_shot(cfg: dict) -> None:
             print(f"{name}: {len(df)} 本しかないのでスキップ");  continue
 
         # デバッグ表示用
-        price = float(df["Close"].iat[-1])
+        # 変更後（iloc を使う）
+        price = float(df["Close"].iloc[-1])
         r9  = rci(df["Close"], 9)
         r26 = rci(df["Close"], 26)
         r52 = rci(df["Close"], 52)
