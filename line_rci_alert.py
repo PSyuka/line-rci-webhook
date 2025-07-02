@@ -22,7 +22,9 @@ def rci(series: pd.Series, period: int) -> float:
     d = date_rank - price_rank
     return (1 - 6 * np.sum(d ** 2) / (period * (period**2 - 1))) * 100
 
-def mochipoyo(df: pd.DataFrame, cfg) -> str | None:
+from typing import Optional
+
+def mochipoyo(df: pd.DataFrame, cfg) -> Optional[str]:
     rci9, rci26, rci52 = (
         rci(df["Close"], 9),
         rci(df["Close"], 26),
@@ -41,6 +43,7 @@ def mochipoyo(df: pd.DataFrame, cfg) -> str | None:
 def load_cfg(path="config.json"):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
+
 
 def main():
     cfg = load_cfg()
